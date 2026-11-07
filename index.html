@@ -1,110 +1,1236 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Vault</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            text-align: center;
-        }
-        input {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            width: 100%;
-        }
-        button {
-            background-color: #28a745;
-            color: white;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-        }
-        .vault-content {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vault</title>
+  <style>
+    :root{
+      --bg0:#07111f;
+      --bg1:#0b1730;
+      --bg2:#101f3d;
+      --card: rgba(14, 23, 44, .68);
+      --card2: rgba(19, 30, 55, .82);
+      --line: rgba(255,255,255,.08);
+      --line2: rgba(255,255,255,.12);
+      --text:#eaf1ff;
+      --muted:#93a4c7;
+      --accent:#5dd6ff;
+      --accent2:#7c8cff;
+      --good:#41d17a;
+      --bad:#ff647c;
+      --warn:#ffd166;
+      --shadow: 0 18px 70px rgba(0,0,0,.45);
+      --radius: 22px;
+      --radius2: 16px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 20% 15%, rgba(93,214,255,.18), transparent 60%),
+        radial-gradient(1000px 700px at 80% 10%, rgba(124,140,255,.18), transparent 55%),
+        radial-gradient(900px 600px at 50% 90%, rgba(65,209,122,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 45%, #07101d 100%);
+      overflow:hidden;
+    }
+    .noise{
+      pointer-events:none;
+      position:fixed; inset:0;
+      opacity:.09;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='%23ffffff'%3E%3Ccircle cx='27' cy='31' r='1'/%3E%3Ccircle cx='91' cy='59' r='1'/%3E%3Ccircle cx='152' cy='18' r='1'/%3E%3Ccircle cx='134' cy='121' r='1'/%3E%3Ccircle cx='48' cy='141' r='1'/%3E%3Ccircle cx='77' cy='103' r='1'/%3E%3Ccircle cx='11' cy='166' r='1'/%3E%3Ccircle cx='166' cy='164' r='1'/%3E%3Ccircle cx='165' cy='91' r='1'/%3E%3Ccircle cx='16' cy='73' r='1'/%3E%3C/g%3E%3C/svg%3E");
+      mix-blend-mode:overlay;
+    }
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-rows:auto 1fr;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:18px 24px;
+      gap:16px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:14px;
+    }
+    .logo{
+      width:46px; height:46px; border-radius:16px;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.9), rgba(255,255,255,0) 24%),
+        linear-gradient(145deg, rgba(93,214,255,.95), rgba(124,140,255,.95));
+      box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 10px 30px rgba(93,214,255,.22);
+      display:grid; place-items:center;
+      color:#04101f;
+      font-weight:900;
+      letter-spacing:.5px;
+      font-size:18px;
+      user-select:none;
+    }
+    .brand h1{
+      margin:0;
+      font-size:18px;
+      line-height:1.1;
+      letter-spacing:.4px;
+    }
+    .brand .sub{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .status{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .pill{
+      padding:9px 13px;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:12px;
+      backdrop-filter: blur(16px);
+    }
+    .pill strong{color:var(--text)}
+    .shell{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:18px;
+      padding: 0 18px 18px;
+      min-height:0;
+    }
+    .panel{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(18px);
+      min-height:0;
+    }
+    .sidebar{
+      display:flex;
+      flex-direction:column;
+      padding:16px;
+      gap:16px;
+      min-height:0;
+    }
+    .sectionTitle{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      margin:0 0 10px;
+    }
+    .nav{
+      display:grid;
+      gap:10px;
+    }
+    .nav button{
+      width:100%;
+      border:1px solid transparent;
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:13px 14px;
+      border-radius:16px;
+      text-align:left;
+      cursor:pointer;
+      transition:.18s ease;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      font-size:14px;
+    }
+    .nav button:hover{ transform: translateY(-1px); background:rgba(255,255,255,.07); }
+    .nav button.active{
+      background:linear-gradient(135deg, rgba(93,214,255,.18), rgba(124,140,255,.14));
+      border-color:rgba(93,214,255,.22);
+      box-shadow:0 10px 22px rgba(0,0,0,.18);
+    }
+    .nav .tag{
+      font-size:11px;
+      color:var(--muted);
+    }
+    .quick{
+      display:grid;
+      gap:12px;
+      margin-top:auto;
+    }
+    .card{
+      background:var(--card2);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+    }
+    .card h3{
+      margin:0 0 8px;
+      font-size:14px;
+    }
+    .card p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    .main{
+      display:grid;
+      grid-template-rows:auto 1fr;
+      min-height:0;
+      overflow:hidden;
+    }
+    .toolbar{
+      padding:16px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .searchRow{
+      display:flex;
+      gap:10px;
+      flex:1;
+      min-width:min(560px,100%);
+      align-items:center;
+    }
+    .input, .textarea{
+      width:100%;
+      background:rgba(6,11,20,.5);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--text);
+      border-radius:14px;
+      padding:13px 14px;
+      outline:none;
+      transition:.15s ease;
+      font:inherit;
+    }
+    .input:focus, .textarea:focus{
+      border-color:rgba(93,214,255,.45);
+      box-shadow:0 0 0 4px rgba(93,214,255,.10);
+    }
+    .textarea{
+      min-height:180px;
+      resize:vertical;
+      line-height:1.5;
+    }
+    .btn{
+      border:none;
+      cursor:pointer;
+      font:inherit;
+      border-radius:14px;
+      padding:12px 16px;
+      color:#08111f;
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      font-weight:800;
+      transition:.18s ease;
+      box-shadow:0 14px 28px rgba(93,214,255,.18);
+      white-space:nowrap;
+    }
+    .btn:hover{ transform: translateY(-1px); filter:saturate(1.05); }
+    .btn.secondary{
+      color:var(--text);
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      box-shadow:none;
+      font-weight:700;
+    }
+    .btn.good{ background:linear-gradient(135deg, #4be38a, #24b86c); }
+    .btn.danger{ background:linear-gradient(135deg, #ff7d92, #ff5b73); }
+    .content{
+      min-height:0;
+      overflow:auto;
+      padding:16px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 340px 1fr;
+      gap:16px;
+      min-height:0;
+    }
+    .list{
+      display:grid;
+      gap:12px;
+      align-content:start;
+    }
+    .item{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      cursor:pointer;
+      transition:.16s ease;
+    }
+    .item:hover{ transform: translateY(-1px); background:rgba(255,255,255,.06); }
+    .item.active{
+      border-color:rgba(93,214,255,.35);
+      background:linear-gradient(180deg, rgba(93,214,255,.10), rgba(124,140,255,.08));
+    }
+    .meta{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .chip{
+      padding:5px 9px;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+    }
+    .viewer{
+      display:grid;
+      gap:14px;
+      align-content:start;
+    }
+    .viewer .preview{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:22px;
+      min-height:420px;
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      padding:18px;
+    }
+    .preview img, .preview video{
+      max-width:100%;
+      max-height:65vh;
+      border-radius:18px;
+      display:block;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+    }
+    .preview .empty{
+      text-align:center;
+      color:var(--muted);
+      max-width:420px;
+      line-height:1.6;
+    }
+    .viewerTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .viewerTop h2{
+      margin:0;
+      font-size:20px;
+    }
+    .viewerTop p{
+      margin:6px 0 0;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+    .hidden{ display:none !important; }
+    .authWrap{
+      height:calc(100vh - 30px);
+      display:grid;
+      place-items:center;
+      padding:20px;
+    }
+    .auth{
+      width:min(420px, 100%);
+      background:rgba(10,16,29,.72);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(18px);
+      padding:26px;
+    }
+    .authHeader{
+      text-align:center;
+      margin-bottom:18px;
+    }
+    .authHeader h2{
+      margin:8px 0 6px;
+      font-size:28px;
+      letter-spacing:-.03em;
+    }
+    .authHeader p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.5;
+    }
+    .authBox{
+      display:grid;
+      gap:12px;
+      margin-top:18px;
+    }
+    .small{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+      margin-top:10px;
+    }
+    .split{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .label{
+      display:block;
+      margin:0 0 8px;
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .statusMsg{
+      min-height:22px;
+      color:var(--warn);
+      font-size:13px;
+      margin-top:4px;
+    }
+    .toast{
+      position:fixed;
+      right:18px; bottom:18px;
+      background:rgba(15,24,43,.88);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      color:var(--text);
+      padding:12px 14px;
+      border-radius:16px;
+      max-width:360px;
+      transform:translateY(12px);
+      opacity:0;
+      transition:.2s ease;
+      pointer-events:none;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateY(0);
+    }
+    .uploader{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .fileInput{
+      display:none;
+    }
+    .emptyState{
+      color:var(--muted);
+      text-align:center;
+      padding:50px 20px;
+      border:1px dashed rgba(255,255,255,.12);
+      border-radius:20px;
+      background:rgba(255,255,255,.03);
+    }
+    .noteTools{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    @media (max-width: 980px){
+      body{ overflow:auto; }
+      .shell{ grid-template-columns:1fr; }
+      .sidebar{ order:2; }
+      .main{ order:1; min-height:68vh; }
+      .grid{ grid-template-columns:1fr; }
+    }
+  </style>
 </head>
 <body>
+  <div class="noise"></div>
 
-<div class="container" id="login">
-    <h2>Enter Vault Password</h2>
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="checkPassword()">Access Vault</button>
-</div>
+  <div id="authScreen" class="authWrap">
+    <div class="auth">
+      <div class="authHeader">
+        <div class="logo" aria-hidden="true">V</div>
+        <h2 id="authTitle">Unlock Vault</h2>
+        <p id="authSubtitle">A private local vault for notes, images, and videos.</p>
+      </div>
 
-<div class="container vault-content" id="vault" style="display: none;">
-    <h2>Welcome to Your Vault</h2>
-    <div style="display: flex; justify-content: center;">
-        <input type="file" accept="image/*, video/*" id="uploadInput">
-        <button onclick="addContent()">Upload</button>
+      <div class="authBox">
+        <div id="setupFields" class="hidden">
+          <label class="label">Create Password</label>
+          <input id="newPassword" class="input" type="password" placeholder="Create a vault password" autocomplete="new-password">
+          <div style="height:10px"></div>
+          <label class="label">Confirm Password</label>
+          <input id="confirmPassword" class="input" type="password" placeholder="Confirm password" autocomplete="new-password">
+        </div>
+
+        <div id="unlockFields">
+          <label class="label">Vault Password</label>
+          <input id="password" class="input" type="password" placeholder="Enter password" autocomplete="current-password">
+        </div>
+
+        <button id="primaryAuthBtn" class="btn good">Access Vault</button>
+        <button id="toggleModeBtn" class="btn secondary">Create New Vault Password</button>
+
+        <div id="authMsg" class="statusMsg"></div>
+        <div class="small">
+          Runs locally in your browser. Your vault data is encrypted with a key derived from your password and stored on this device.
+        </div>
+      </div>
     </div>
-    <div id="contentArea"></div>
-</div>
+  </div>
 
-<script>
-    const correctPassword = "yourpassword"; // Replace 'yourpassword' with the actual password
+  <div id="app" class="app hidden">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">V</div>
+        <div>
+          <h1>Vault</h1>
+          <div class="sub">Local encrypted vault for text, images, and videos</div>
+        </div>
+      </div>
+      <div class="status">
+        <div class="pill"><strong id="itemCount">0</strong> items</div>
+        <div class="pill">Status: <strong id="lockState">Unlocked</strong></div>
+      </div>
+    </div>
 
-    function checkPassword() {
-        const password = document.getElementById('password').value;
-        if (password === correctPassword) {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('vault').style.display = 'block';
+    <div class="shell">
+      <aside class="panel sidebar">
+        <div>
+          <div class="sectionTitle">Sections</div>
+          <div class="nav">
+            <button class="active" data-tab="notesTab"><span>Notes</span><span class="tag" id="notesTag">0</span></button>
+            <button data-tab="mediaTab"><span>Media</span><span class="tag" id="mediaTag">0</span></button>
+            <button data-tab="settingsTab"><span>Settings</span><span class="tag">Local</span></button>
+          </div>
+        </div>
+
+        <div class="quick">
+          <div class="card">
+            <h3>Tip</h3>
+            <p>Keep this on a device only you use. A single-file app is clean and fast, but it is still browser-based local storage.</p>
+          </div>
+          <div class="card">
+            <h3>Upgrade path</h3>
+            <p>Later, this can be split into a real frontend + backend if you decide to make it multi-user or networked.</p>
+          </div>
+        </div>
+      </aside>
+
+      <main class="panel main">
+        <div class="toolbar">
+          <div class="searchRow">
+            <input id="search" class="input" type="search" placeholder="Search notes, filenames, tags..." />
+          </div>
+          <div class="uploader">
+            <button id="newNoteBtn" class="btn">New Note</button>
+            <button id="uploadBtn" class="btn secondary">Add Media</button>
+            <input id="fileInput" class="fileInput" type="file" multiple accept="image/*,video/*" />
+          </div>
+        </div>
+
+        <div class="content">
+          <section id="notesTab" class="tab">
+            <div class="grid">
+              <div class="list" id="notesList"></div>
+
+              <div class="viewer">
+                <div class="viewerTop">
+                  <div>
+                    <h2 id="editorTitle">No note selected</h2>
+                    <p id="editorMeta">Create a note or choose one from the list.</p>
+                  </div>
+                  <div class="actions">
+                    <button id="saveNoteBtn" class="btn good">Save</button>
+                    <button id="deleteNoteBtn" class="btn danger">Delete</button>
+                  </div>
+                </div>
+
+                <div class="card" style="padding:14px;">
+                  <label class="label">Title</label>
+                  <input id="noteTitle" class="input" type="text" placeholder="Note title">
+                  <div style="height:10px"></div>
+                  <label class="label">Text</label>
+                  <textarea id="noteBody" class="textarea" placeholder="Write something private..."></textarea>
+                  <div style="height:10px"></div>
+                  <label class="label">Tags (comma separated)</label>
+                  <input id="noteTags" class="input" type="text" placeholder="work, ideas, password, etc.">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="mediaTab" class="tab hidden">
+            <div class="grid">
+              <div class="list" id="mediaList"></div>
+
+              <div class="viewer">
+                <div class="viewerTop">
+                  <div>
+                    <h2 id="mediaTitle">No media selected</h2>
+                    <p id="mediaMeta">Select an image or video to preview it here.</p>
+                  </div>
+                  <div class="actions">
+                    <button id="deleteMediaBtn" class="btn danger">Delete</button>
+                  </div>
+                </div>
+                <div class="preview" id="previewBox">
+                  <div class="empty">
+                    <h3 style="margin:0 0 8px;">Preview</h3>
+                    <div>Images and videos appear here after you add them to the vault.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="settingsTab" class="tab hidden">
+            <div class="card" style="max-width:820px">
+              <h3 style="margin-top:0">Vault Settings</h3>
+              <p>Everything below stays local to this browser profile.</p>
+              <div style="height:14px"></div>
+              <div class="split">
+                <button id="lockBtn" class="btn secondary">Lock Vault</button>
+                <button id="resetBtn" class="btn danger">Reset Everything</button>
+              </div>
+              <div style="height:14px"></div>
+              <p class="small">
+                Reset will permanently erase the vault data in this browser. There is no cloud backup unless you make one yourself.
+              </p>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ===== IndexedDB helpers =====
+    const DB_NAME = 'vault-db';
+    const DB_VERSION = 1;
+    const STORE = 'items';
+    const META_KEY = 'vault-meta';
+
+    let db = null;
+    let masterKey = null;
+    let selectedNoteId = null;
+    let selectedMediaId = null;
+    let notes = [];
+    let mediaItems = [];
+    let currentTab = 'notesTab';
+    let isSetupMode = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    function toast(msg){
+      const t = $('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    function bufToB64(buf){
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    }
+
+    function b64ToBuf(b64){
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes.buffer;
+    }
+
+    function concatBuf(a, b){
+      const out = new Uint8Array(a.byteLength + b.byteLength);
+      out.set(new Uint8Array(a), 0);
+      out.set(new Uint8Array(b), a.byteLength);
+      return out.buffer;
+    }
+
+    async function deriveKey(password, salt){
+      const enc = new TextEncoder();
+      const baseKey = await crypto.subtle.importKey(
+        'raw',
+        enc.encode(password),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+      );
+      return crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt,
+          iterations: 150000,
+          hash: 'SHA-256'
+        },
+        baseKey,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    async function encryptText(text){
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const data = new TextEncoder().encode(text);
+      const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, masterKey, data);
+      return { iv: bufToB64(iv.buffer), data: bufToB64(cipher) };
+    }
+
+    async function decryptText(payload){
+      const iv = new Uint8Array(b64ToBuf(payload.iv));
+      const data = b64ToBuf(payload.data);
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, masterKey, data);
+      return new TextDecoder().decode(plain);
+    }
+
+    async function encryptBytes(arrayBuffer){
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, masterKey, arrayBuffer);
+      return { iv: bufToB64(iv.buffer), data: bufToB64(cipher) };
+    }
+
+    async function decryptBytes(payload){
+      const iv = new Uint8Array(b64ToBuf(payload.iv));
+      const data = b64ToBuf(payload.data);
+      return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, masterKey, data);
+    }
+
+    function openDB(){
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STORE)) {
+            const store = db.createObjectStore(STORE, { keyPath: 'id' });
+            store.createIndex('kind', 'kind', { unique: false });
+            store.createIndex('updatedAt', 'updatedAt', { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function dbTx(mode='readonly'){
+      return db.transaction(STORE, mode).objectStore(STORE);
+    }
+
+    function id(){
+      return (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+    }
+
+    async function saveItem(item){
+      return new Promise((resolve, reject) => {
+        const req = dbTx('readwrite').put(item);
+        req.onsuccess = () => resolve(item);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function deleteItem(itemId){
+      return new Promise((resolve, reject) => {
+        const req = dbTx('readwrite').delete(itemId);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function loadAllItems(){
+      return new Promise((resolve, reject) => {
+        const req = dbTx('readonly').getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // ===== Meta =====
+    function getMeta(){
+      try { return JSON.parse(localStorage.getItem(META_KEY) || '{}'); }
+      catch { return {}; }
+    }
+
+    function setMeta(meta){
+      localStorage.setItem(META_KEY, JSON.stringify(meta));
+    }
+
+    function hasVault(){
+      const meta = getMeta();
+      return !!(meta.salt && meta.verifier);
+    }
+
+    async function createVault(password){
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      masterKey = await deriveKey(password, salt);
+
+      const verifier = await encryptText('vault-ok');
+      setMeta({
+        salt: bufToB64(salt.buffer),
+        verifier
+      });
+
+      await seedExampleData();
+      toast('Vault created');
+    }
+
+    async function unlockVault(password){
+      const meta = getMeta();
+      const salt = new Uint8Array(b64ToBuf(meta.salt));
+      masterKey = await deriveKey(password, salt);
+
+      // Verify by decrypting the stored marker.
+      const marker = await decryptText(meta.verifier);
+      if (marker !== 'vault-ok') throw new Error('Bad password');
+
+      return true;
+    }
+
+    async function resetVault(){
+      if (!confirm('This will erase the vault on this browser. Continue?')) return;
+      localStorage.removeItem(META_KEY);
+      indexedDB.deleteDatabase(DB_NAME);
+      location.reload();
+    }
+
+    async function lockVault(){
+      masterKey = null;
+      $('app').classList.add('hidden');
+      $('authScreen').classList.remove('hidden');
+      $('password').value = '';
+      $('newPassword').value = '';
+      $('confirmPassword').value = '';
+      $('noteTitle').value = '';
+      $('noteBody').value = '';
+      $('noteTags').value = '';
+      selectedNoteId = null;
+      selectedMediaId = null;
+      toast('Vault locked');
+    }
+
+    // ===== Data model =====
+    async function seedExampleData(){
+      const existing = await loadAllItems();
+      if (existing.length) return;
+
+      const note1 = {
+        id: id(),
+        kind: 'note',
+        title: 'Vault idea',
+        content: 'Use this space for private notes, plans, and drafts.',
+        tags: ['ideas', 'private'],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      const note2 = {
+        id: id(),
+        kind: 'note',
+        title: 'Website prompt',
+        content: 'Build a secure private vault with notes, images, and videos in a single-file prototype first.',
+        tags: ['code', 'website'],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      await saveItem(await encryptItem(note1));
+      await saveItem(await encryptItem(note2));
+      await refreshItems();
+    }
+
+    async function encryptItem(item){
+      if (item.kind === 'note') {
+        const encrypted = await encryptText(JSON.stringify({
+          title: item.title,
+          content: item.content,
+          tags: item.tags || []
+        }));
+        return {
+          id: item.id,
+          kind: 'note',
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          payload: encrypted
+        };
+      }
+
+      if (item.kind === 'media') {
+        const encrypted = await encryptBytes(item.bytes);
+        return {
+          id: item.id,
+          kind: 'media',
+          mime: item.mime,
+          name: item.name,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          payload: encrypted
+        };
+      }
+
+      return item;
+    }
+
+    async function decryptItem(item){
+      if (item.kind === 'note') {
+        const data = JSON.parse(await decryptText(item.payload));
+        return { ...item, ...data };
+      }
+
+      if (item.kind === 'media') {
+        const bytes = await decryptBytes(item.payload);
+        return { ...item, bytes };
+      }
+
+      return item;
+    }
+
+    async function refreshItems(){
+      const items = await loadAllItems();
+      const decrypted = [];
+      for (const item of items) {
+        try {
+          decrypted.push(await decryptItem(item));
+        } catch (e) {
+          // skip corrupted item
+        }
+      }
+      notes = decrypted.filter(x => x.kind === 'note').sort((a,b) => b.updatedAt - a.updatedAt);
+      mediaItems = decrypted.filter(x => x.kind === 'media').sort((a,b) => b.updatedAt - a.updatedAt);
+
+      $('itemCount').textContent = decrypted.length;
+      $('notesTag').textContent = notes.length;
+      $('mediaTag').textContent = mediaItems.length;
+      renderLists();
+      renderCurrentSelection();
+    }
+
+    // ===== Rendering =====
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
+    }
+
+    function fmtTime(ts){
+      return new Date(ts).toLocaleString([], {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    }
+
+    function getSearch(){
+      return $('search').value.trim().toLowerCase();
+    }
+
+    function filteredNotes(){
+      const q = getSearch();
+      return notes.filter(n => {
+        if (!q) return true;
+        return (
+          n.title.toLowerCase().includes(q) ||
+          n.content.toLowerCase().includes(q) ||
+          (n.tags || []).join(' ').toLowerCase().includes(q)
+        );
+      });
+    }
+
+    function filteredMedia(){
+      const q = getSearch();
+      return mediaItems.filter(m => {
+        if (!q) return true;
+        return (
+          m.name.toLowerCase().includes(q) ||
+          (m.mime || '').toLowerCase().includes(q)
+        );
+      });
+    }
+
+    function renderLists(){
+      const notesList = $('notesList');
+      const mediaList = $('mediaList');
+      const n = filteredNotes();
+      const m = filteredMedia();
+
+      notesList.innerHTML = n.length ? n.map(note => `
+        <div class="item ${selectedNoteId === note.id ? 'active' : ''}" data-note="${note.id}">
+          <strong>${escapeHtml(note.title || 'Untitled Note')}</strong>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px;line-height:1.45;">
+            ${escapeHtml(note.content.slice(0, 120) || 'No text')}
+          </div>
+          <div class="meta">
+            <span class="chip">${fmtTime(note.updatedAt)}</span>
+            ${(note.tags || []).slice(0,3).map(tag => `<span class="chip">#${escapeHtml(tag)}</span>`).join('')}
+          </div>
+        </div>
+      `).join('') : `<div class="emptyState">No notes yet. Make one.</div>`;
+
+      mediaList.innerHTML = m.length ? m.map(file => `
+        <div class="item ${selectedMediaId === file.id ? 'active' : ''}" data-media="${file.id}">
+          <strong>${escapeHtml(file.name)}</strong>
+          <div class="meta">
+            <span class="chip">${file.mime.startsWith('image/') ? 'Image' : 'Video'}</span>
+            <span class="chip">${fmtTime(file.updatedAt)}</span>
+          </div>
+        </div>
+      `).join('') : `<div class="emptyState">No images or videos added yet.</div>`;
+    }
+
+    function renderCurrentSelection(){
+      const note = notes.find(n => n.id === selectedNoteId) || notes[0] || null;
+      if (note && currentTab === 'notesTab') {
+        selectedNoteId = note.id;
+        $('editorTitle').textContent = note.title || 'Untitled Note';
+        $('editorMeta').textContent = `Updated ${fmtTime(note.updatedAt)}`;
+        $('noteTitle').value = note.title || '';
+        $('noteBody').value = note.content || '';
+        $('noteTags').value = (note.tags || []).join(', ');
+      } else if (currentTab === 'notesTab') {
+        $('editorTitle').textContent = 'No note selected';
+        $('editorMeta').textContent = 'Create a note or choose one from the list.';
+        $('noteTitle').value = '';
+        $('noteBody').value = '';
+        $('noteTags').value = '';
+      }
+
+      const media = mediaItems.find(m => m.id === selectedMediaId) || mediaItems[0] || null;
+      if (media && currentTab === 'mediaTab') {
+        selectedMediaId = media.id;
+        $('mediaTitle').textContent = media.name;
+        $('mediaMeta').textContent = `${media.mime} • Updated ${fmtTime(media.updatedAt)}`;
+      } else if (currentTab === 'mediaTab') {
+        $('mediaTitle').textContent = 'No media selected';
+        $('mediaMeta').textContent = 'Select an image or video to preview it here.';
+        $('previewBox').innerHTML = `<div class="empty"><h3 style="margin:0 0 8px;">Preview</h3><div>Images and videos appear here after you add them to the vault.</div></div>`;
+      }
+
+      updatePreview();
+      renderLists();
+    }
+
+    async function updatePreview(){
+      if (currentTab !== 'mediaTab') return;
+      const media = mediaItems.find(m => m.id === selectedMediaId) || mediaItems[0] || null;
+      const box = $('previewBox');
+
+      if (!media) {
+        box.innerHTML = `<div class="empty"><h3 style="margin:0 0 8px;">Preview</h3><div>Images and videos appear here after you add them to the vault.</div></div>`;
+        return;
+      }
+
+      try {
+        const bytes = await decryptBytes(media.payload);
+        const blob = new Blob([bytes], { type: media.mime });
+        const url = URL.createObjectURL(blob);
+
+        if (media.mime.startsWith('image/')) {
+          box.innerHTML = `<img src="${url}" alt="${escapeHtml(media.name)}">`;
         } else {
-            alert("Incorrect Password!");
+          box.innerHTML = `<video src="${url}" controls playsinline></video>`;
         }
+
+        setTimeout(() => URL.revokeObjectURL(url), 15000);
+      } catch (e) {
+        box.innerHTML = `<div class="empty"><h3 style="margin:0 0 8px;">Could not preview</h3><div>This file may be corrupted.</div></div>`;
+      }
     }
 
-    function addContent() {
-        const fileInput = document.getElementById('uploadInput');
-        const contentArea = document.getElementById('contentArea');
+    // ===== Actions =====
+    async function saveCurrentNote(){
+      const title = $('noteTitle').value.trim() || 'Untitled Note';
+      const content = $('noteBody').value.trim();
+      const tags = $('noteTags').value.split(',').map(s => s.trim()).filter(Boolean);
+      const now = Date.now();
 
-        if (fileInput.files.length > 0) {
-            for (let i = 0; i < fileInput.files.length; i++) {
-                const file = fileInput.files[i];
-                const reader = new FileReader();
+      const note = {
+        id: selectedNoteId || id(),
+        kind: 'note',
+        title,
+        content,
+        tags,
+        createdAt: selectedNoteId ? (notes.find(n => n.id === selectedNoteId)?.createdAt || now) : now,
+        updatedAt: now
+      };
 
-                reader.onload = function(event) {
-                    const content = document.createElement('div');
-                    const preview = document.createElement(file.type.startsWith('image/') ? 'img' : 'video');
-
-                    if (file.type.startsWith('image/')) {
-                        preview.src = event.target.result;
-                        preview.style.maxWidth = "100%";
-                    } else if (file.type.startsWith('video/')) {
-                        preview.src = event.target.result;
-                        preview.controls = true;
-                    }
-
-                    content.appendChild(preview);
-                    contentArea.appendChild(content);
-                };
-
-                reader.readAsDataURL(file);
-            }
-        }
+      await saveItem(await encryptItem(note));
+      selectedNoteId = note.id;
+      await refreshItems();
+      toast('Note saved');
     }
-</script>
 
+    async function deleteCurrentNote(){
+      if (!selectedNoteId) return toast('Pick a note first');
+      const note = notes.find(n => n.id === selectedNoteId);
+      if (!note) return;
+      if (!confirm(`Delete "${note.title}"?`)) return;
+      await deleteItem(selectedNoteId);
+      selectedNoteId = null;
+      await refreshItems();
+      toast('Note deleted');
+    }
+
+    async function addMedia(files){
+      if (!files || !files.length) return;
+      for (const file of files) {
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) continue;
+        const bytes = await file.arrayBuffer();
+        const record = {
+          id: id(),
+          kind: 'media',
+          name: file.name,
+          mime: file.type,
+          bytes,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+        await saveItem(await encryptItem(record));
+      }
+      await refreshItems();
+      toast('Media added');
+    }
+
+    async function deleteCurrentMedia(){
+      if (!selectedMediaId) return toast('Pick media first');
+      const media = mediaItems.find(m => m.id === selectedMediaId);
+      if (!media) return;
+      if (!confirm(`Delete "${media.name}"?`)) return;
+      await deleteItem(selectedMediaId);
+      selectedMediaId = null;
+      await refreshItems();
+      toast('Media deleted');
+    }
+
+    function showTab(tabId){
+      currentTab = tabId;
+      document.querySelectorAll('.tab').forEach(el => el.classList.add('hidden'));
+      $(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabId);
+      });
+
+      renderCurrentSelection();
+    }
+
+    function setAuthMode(setup){
+      isSetupMode = setup;
+      $('setupFields').classList.toggle('hidden', !setup);
+      $('unlockFields').classList.toggle('hidden', setup);
+      $('primaryAuthBtn').textContent = setup ? 'Create Vault' : 'Access Vault';
+      $('toggleModeBtn').textContent = setup ? 'I Already Have a Vault' : 'Create New Vault Password';
+      $('authTitle').textContent = setup ? 'Create Vault' : 'Unlock Vault';
+      $('authSubtitle').textContent = setup
+        ? 'Create a password for this local vault.'
+        : 'Enter the password to open your vault.';
+      $('authMsg').textContent = '';
+    }
+
+    async function authAction(){
+      $('authMsg').textContent = '';
+      try {
+        if (isSetupMode || !hasVault()) {
+          const p1 = $('newPassword').value;
+          const p2 = $('confirmPassword').value;
+          if (p1.length < 6) throw new Error('Password should be at least 6 characters.');
+          if (p1 !== p2) throw new Error('Passwords do not match.');
+          await createVault(p1);
+        } else {
+          const p = $('password').value;
+          if (!p) throw new Error('Enter your password.');
+          await unlockVault(p);
+        }
+
+        $('authScreen').classList.add('hidden');
+        $('app').classList.remove('hidden');
+        await refreshItems();
+        toast('Vault unlocked');
+      } catch (e) {
+        $('authMsg').textContent = e.message || 'Could not unlock vault';
+      }
+    }
+
+    // ===== Events =====
+    $('primaryAuthBtn').addEventListener('click', authAction);
+    $('toggleModeBtn').addEventListener('click', () => setAuthMode(!isSetupMode && !hasVault() ? true : !isSetupMode));
+    $('newNoteBtn').addEventListener('click', async () => {
+      selectedNoteId = null;
+      $('noteTitle').value = '';
+      $('noteBody').value = '';
+      $('noteTags').value = '';
+      showTab('notesTab');
+      $('noteTitle').focus();
+    });
+    $('saveNoteBtn').addEventListener('click', saveCurrentNote);
+    $('deleteNoteBtn').addEventListener('click', deleteCurrentNote);
+    $('uploadBtn').addEventListener('click', () => $('fileInput').click());
+    $('fileInput').addEventListener('change', e => addMedia(e.target.files).then(() => e.target.value = ''));
+    $('search').addEventListener('input', () => renderLists());
+
+    $('lockBtn').addEventListener('click', lockVault);
+    $('resetBtn').addEventListener('click', resetVault);
+    $('deleteMediaBtn').addEventListener('click', deleteCurrentMedia);
+
+    document.querySelectorAll('.nav button').forEach(btn => {
+      btn.addEventListener('click', () => showTab(btn.dataset.tab));
+    });
+
+    $('notesList').addEventListener('click', (e) => {
+      const item = e.target.closest('[data-note]');
+      if (!item) return;
+      selectedNoteId = item.dataset.note;
+      showTab('notesTab');
+      const note = notes.find(n => n.id === selectedNoteId);
+      if (note) {
+        $('noteTitle').value = note.title || '';
+        $('noteBody').value = note.content || '';
+        $('noteTags').value = (note.tags || []).join(', ');
+        $('editorTitle').textContent = note.title || 'Untitled Note';
+        $('editorMeta').textContent = `Updated ${fmtTime(note.updatedAt)}`;
+      }
+      renderLists();
+    });
+
+    $('mediaList').addEventListener('click', (e) => {
+      const item = e.target.closest('[data-media]');
+      if (!item) return;
+      selectedMediaId = item.dataset.media;
+      showTab('mediaTab');
+      const media = mediaItems.find(m => m.id === selectedMediaId);
+      if (media) {
+        $('mediaTitle').textContent = media.name;
+        $('mediaMeta').textContent = `${media.mime} • Updated ${fmtTime(media.updatedAt)}`;
+      }
+      renderLists();
+      updatePreview();
+    });
+
+    async function init(){
+      db = await openDB();
+
+      if (!hasVault()) {
+        setAuthMode(true);
+      } else {
+        setAuthMode(false);
+      }
+
+      // If user presses Enter, authenticate
+      ['password','newPassword','confirmPassword'].forEach(id => {
+        $(id).addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') authAction();
+        });
+      });
+    }
+
+    init().catch(err => {
+      console.error(err);
+      $('authMsg').textContent = 'Could not initialize vault storage.';
+    });
+  </script>
 </body>
 </html>
