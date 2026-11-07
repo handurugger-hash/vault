@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Vault</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        input {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .vault-content {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="login">
+    <h2>Enter Vault Password</h2>
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="checkPassword()">Access Vault</button>
+</div>
+
+<div class="container vault-content" id="vault" style="display: none;">
+    <h2>Welcome to Your Vault</h2>
+    <div style="display: flex; justify-content: center;">
+        <input type="file" accept="image/*, video/*" id="uploadInput">
+        <button onclick="addContent()">Upload</button>
+    </div>
+    <div id="contentArea"></div>
+</div>
+
+<script>
+    const correctPassword = "yourpassword"; // Replace 'yourpassword' with the actual password
+
+    function checkPassword() {
+        const password = document.getElementById('password').value;
+        if (password === correctPassword) {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('vault').style.display = 'block';
+        } else {
+            alert("Incorrect Password!");
+        }
+    }
+
+    function addContent() {
+        const fileInput = document.getElementById('uploadInput');
+        const contentArea = document.getElementById('contentArea');
+
+        if (fileInput.files.length > 0) {
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                const reader = new FileReader();
+
+                reader.onload = function(event) {
+                    const content = document.createElement('div');
+                    const preview = document.createElement(file.type.startsWith('image/') ? 'img' : 'video');
+
+                    if (file.type.startsWith('image/')) {
+                        preview.src = event.target.result;
+                        preview.style.maxWidth = "100%";
+                    } else if (file.type.startsWith('video/')) {
+                        preview.src = event.target.result;
+                        preview.controls = true;
+                    }
+
+                    content.appendChild(preview);
+                    contentArea.appendChild(content);
+                };
+
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
